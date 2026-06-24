@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Significant Objects</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#ffffff;color:#111;font-family:'Inter',sans-serif}
+body{overflow-x:hidden}
+.screen{display:none;min-height:100vh;padding:2.5rem}
+.screen.active{display:flex;flex-direction:column}
+.center-screen{justify-content:center;align-items:center;text-align:center}
+h1{font-size:1.75rem;font-weight:700;line-height:1.2;color:#111;letter-spacing:-.02em}
+h2{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#999;margin-bottom:.75rem}
+.subtitle{color:#777;font-size:.7rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.3rem}
+.muted{color:#999;font-size:.85rem}
+.accent{color:#2563eb}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:4px;font-family:'Inter',sans-serif;font-size:.875rem;font-weight:500;cursor:pointer;transition:all .15s;border:none}
+.btn-primary{background:#111;color:#fff}
+.btn-primary:hover{background:#333}
+.btn-primary:disabled{background:#e5e7eb;color:#9ca3af;cursor:not-allowed}
+.btn-ghost{background:transparent;color:#111;border:1px solid #e5e7eb}
+.btn-ghost:hover{background:#f9fafb;border-color:#d1d5db}
+.btn-danger{background:transparent;color:#dc2626;border:1px solid #fecaca}
+.btn-danger:hover{background:#fef2f2}
+.btn-sm{padding:6px 12px;font-size:.8rem}
+.btn-full{width:100%;margin-top:.5rem}
+input,textarea{background:#fff;border:1px solid #e5e7eb;border-radius:4px;color:#111;font-family:'Inter',sans-serif;font-size:.9rem;padding:10px 14px;width:100%;transition:border .15s}
+input:focus,textarea:focus{outline:none;border-color:#111;box-shadow:0 0 0 3px rgba(0,0,0,.06)}
+textarea{resize:vertical;line-height:1.6}
+label{display:block;font-size:.78rem;font-weight:500;color:#555;margin-bottom:.3rem}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:1.5rem}
+.card-active{background:#fff;border:2px solid #111;border-radius:4px;padding:1.5rem}
+.tag{display:inline-block;padding:3px 10px;border-radius:4px;font-size:.7rem;font-weight:500}
+.tag-blue{background:#eff6ff;color:#2563eb}
+.tag-green{background:#f0fdf4;color:#16a34a}
+.tag-gray{background:#f3f4f6;color:#6b7280}
+.tag-red{background:#fef2f2;color:#dc2626}
+.tag-yellow{background:#fefce8;color:#ca8a04}
+.divider{border:none;border-top:1px solid #f3f4f6;margin:1.25rem 0}
+.flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}
+.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}
+.mt-1{margin-top:.25rem}.mt-2{margin-top:.5rem}.mt-3{margin-top:.75rem}.mt-4{margin-top:1rem}.mt-6{margin-top:1.5rem}.mt-8{margin-top:2rem}
+.mb-1{margin-bottom:.25rem}.mb-2{margin-bottom:.5rem}.mb-3{margin-bottom:.75rem}.mb-4{margin-bottom:1rem}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+.w-full{width:100%}
+.bold{font-weight:600}
+.text-sm{font-size:.85rem}
+.text-xs{font-size:.75rem}
+.code-display{font-size:4rem;font-weight:700;color:#111;letter-spacing:.15em;line-height:1}
+.p-chip{display:inline-flex;align-items:center;background:#f3f4f6;border-radius:4px;padding:4px 10px;font-size:.78rem;font-weight:500;margin:2px;color:#374151}
+.budget-bar{background:#f3f4f6;border-radius:3px;height:5px;overflow:hidden;margin:.4rem 0}
+.budget-fill{height:100%;background:#111;transition:width .3s;border-radius:3px}
+.vote-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f3f4f6}
+.vote-row:last-child{border-bottom:none}
+.amount-pill{background:#111;color:#fff;border-radius:4px;padding:3px 10px;font-size:.8rem;font-weight:600}
+input[type=range]{-webkit-appearance:none;appearance:none;background:#e5e7eb;height:4px;border-radius:3px;border:none;padding:0;cursor:pointer;width:100%}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:#111;border-radius:50%;cursor:pointer}
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:9px 20px;border-radius:4px;font-weight:500;font-size:.82rem;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+@keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .3s ease}
+.pulse-dot{width:7px;height:7px;background:#111;border-radius:50%;display:inline-block;animation:pulse 1.5s ease-in-out infinite}
+
+/* pick grid */
+.pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;margin-top:1rem}
+.pick-card{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:.75rem;cursor:pointer;transition:all .15s;position:relative;text-align:center}
+.pick-card:hover:not(.taken):not(.mine){border-color:#111;box-shadow:0 0 0 3px rgba(0,0,0,.06)}
+.pick-card.taken{opacity:.35;cursor:not-allowed}
+.pick-card.taken::after{content:'Taken';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.7rem;font-weight:600;color:#6b7280;background:#fff;padding:3px 8px;border-radius:4px;border:1px solid #e5e7eb}
+.pick-card.mine{border-color:#111;border-width:2px}
+.pick-card.mine::after{content:'Yours';position:absolute;top:6px;right:6px;font-size:.65rem;font-weight:600;color:#16a34a;background:#f0fdf4;padding:2px 6px;border-radius:4px}
+.pick-card-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:4px;margin-bottom:.6rem;background:#f3f4f6;display:block}
+.pick-card-placeholder{width:100%;aspect-ratio:4/3;background:#f3f4f6;border-radius:4px;margin-bottom:.6rem;display:flex;align-items:center;justify-content:center;font-size:1.8rem}
+.pick-card-name{font-size:.82rem;font-weight:500;line-height:1.3;color:#111}
+.pick-card-claimer{font-size:.68rem;color:#9ca3af;margin-top:.25rem}
+
+/* library grid */
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.75rem;margin-top:1rem}
+.lib-card{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:.75rem;cursor:pointer;transition:all .15s;position:relative;text-align:center}
+.lib-card:hover{border-color:#9ca3af}
+.lib-card.selected{border-color:#111;border-width:2px}
+.lib-card.selected::after{content:'✓';position:absolute;top:6px;right:8px;color:#111;font-weight:700;font-size:.85rem}
+.lib-card-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:4px;margin-bottom:.5rem;background:#f3f4f6;display:block}
+.lib-card-placeholder{width:100%;aspect-ratio:4/3;background:#f3f4f6;border-radius:4px;margin-bottom:.5rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.lib-card-name{font-size:.78rem;font-weight:500;line-height:1.3;color:#111}
+
+/* results */
+.result-item{border-radius:4px;padding:1.25rem;margin-bottom:.75rem;border:1px solid #e5e7eb;background:#fff}
+.result-item.first{border-color:#111;border-width:2px}
+.rank-num{font-size:1.5rem;font-weight:700;color:#d1d5db;min-width:2rem}
+.rank-num.top{color:#111}
+
+@media(max-width:480px){
+  .screen{padding:1.25rem}
+  h1{font-size:1.45rem}
+  .grid-2{grid-template-columns:1fr}
+  .code-display{font-size:3rem}
+  .pick-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- HOME -->
+<div class="screen center-screen active" id="screen-home">
+  <div class="fade-in" style="text-align:center">
+    <p style="font-size:.75rem;font-weight:600;color:#9ca3af;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.5rem">J.A. Bazán</p>
+    <h1 style="font-size:2.4rem">Significant<br>Objects</h1>
+    <p style="color:#6b7280;font-size:.9rem;max-width:340px;margin:.6rem auto 0;font-style:italic;font-size:.9rem">Reimagining value through storytelling.<br>Inspired by Rob Walker's experiment.</p>
+    <div class="flex gap-3 mt-8" style="justify-content:center;margin-top:2rem;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="showSetup()">I'm the facilitator</button>
+      <button class="btn btn-ghost" onclick="goTo('screen-join')">Join a session</button>
+    </div>
+    <div style="margin-top:2rem;display:inline-block;background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:.75rem">
+      <p style="font-size:.65rem;color:#9ca3af;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em;font-weight:500">Scan to open on your phone</p>
+      <img id="home-qr-img" src="" width="140" height="140" style="display:block;margin:0 auto">
+    </div>
+  </div>
+</div>
+
+<!-- JOIN -->
+<div class="screen" id="screen-join">
+  <p class="subtitle">Participant</p>
+  <h1>Join session</h1>
+  <div class="card mt-4" style="max-width:380px">
+    <label>Your name</label>
+    <input type="text" id="p-name" placeholder="Name or nickname" autocomplete="off">
+    <label style="margin-top:1rem">Session code</label>
+    <input type="text" id="p-code" placeholder="4 letters" maxlength="4"
+      style="text-transform:uppercase;letter-spacing:.25em;font-size:1.4rem;text-align:center" autocomplete="off">
+    <button class="btn btn-primary btn-full" onclick="joinSession()">Enter →</button>
+    <button class="btn btn-ghost btn-full" onclick="goTo('screen-home')">Back</button>
+  </div>
+</div>
+
+<!-- FACILITATOR SETUP -->
+<div class="screen" id="screen-facilitator-setup">
+  <p class="subtitle">Facilitator Setup</p>
+  <h1>New session</h1>
+  <div class="grid-2 mt-4" style="margin-top:1.5rem;max-width:800px">
+    <div>
+      <div class="card">
+        <h2>Object library</h2>
+        <p class="muted text-sm mb-3">Select objects for this session. <span class="amber" id="selected-count">0 selected</span></p>
+        <div class="lib-grid" id="lib-grid"><p class="muted text-sm">Loading library…</p></div>
+        <div class="divider"></div>
+        <p class="text-xs muted mb-2" style="margin-bottom:.5rem">Add new object to library</p>
+        <label>Name</label>
+        <input type="text" id="new-obj-name" placeholder="e.g. Rusty compass">
+        <label style="margin-top:.75rem">Image URL <span style="color:#555">(optional)</span></label>
+        <input type="text" id="new-obj-img" placeholder="https://...">
+        <button class="btn btn-ghost btn-full mt-2" style="margin-top:.6rem" onclick="addObjectToLibrary()">+ Add to library</button>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h2>Session settings</h2>
+        <label>Budget per participant (fictitious USD)</label>
+        <input type="number" id="budget-amount" value="100" min="10" max="500" step="10" style="width:120px">
+        <label style="margin-top:1rem">Writing time (minutes)</label>
+        <input type="number" id="write-time" value="10" min="3" max="30" style="width:100px">
+        <div class="divider"></div>
+        <div id="session-objects-preview" class="mb-3" style="margin-bottom:1rem"></div>
+        <button class="btn btn-primary w-full" id="btn-create-session" onclick="createSession()" disabled>Create session →</button>
+        <button class="btn btn-ghost btn-full" onclick="goTo('screen-home')">Back</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FACILITATOR LOBBY -->
+<div class="screen" id="screen-facilitator-lobby">
+  <div class="flex justify-between items-center flex-wrap gap-4">
+    <div>
+      <p class="subtitle">Facilitator Lobby</p>
+      <h1>Waiting for participants</h1>
+    </div>
+    <div style="text-align:right">
+      <p class="text-xs muted">Session code</p>
+      <div class="code-display" id="lobby-code">----</div>
+    </div>
+  </div>
+  <div class="flex gap-4 mt-4" style="margin-top:1.5rem;align-items:flex-start;flex-wrap:wrap">
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:1rem;text-align:center;flex-shrink:0">
+      <p class="text-xs muted" style="margin-bottom:.5rem">Scan to join</p>
+      <canvas id="qr-canvas" width="160" height="160" style="display:block;margin:0 auto"></canvas>
+      <p style="font-size:.65rem;color:#9ca3af;margin-top:.5rem;word-break:break-all;max-width:160px" id="qr-url-label"></p>
+    </div>
+    <div style="flex:1;min-width:280px">
+      <div class="grid-2">
+        <div class="card">
+          <div class="flex justify-between items-center mb-3">
+            <h2 style="margin-bottom:0">Participants</h2>
+            <span class="tag tag-gray" id="p-count">0 joined</span>
+          </div>
+          <div id="participants-chips"><p class="muted text-sm">Waiting...</p></div>
+        </div>
+        <div class="card">
+          <h2>Objects in session</h2>
+          <div id="lobby-objects"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="flex gap-3 mt-6" style="margin-top:1.5rem;flex-wrap:wrap">
+    <button class="btn btn-primary" id="btn-open-picking" onclick="openPickingPhase()" disabled>Open object picking →</button>
+    <button class="btn btn-ghost" onclick="copyCode()">Copy code</button>
+    <button class="btn btn-danger btn-sm" onclick="endSession()">End session</button>
+  </div>
+</div>
+
+<!-- FACILITATOR PICKING -->
+<div class="screen" id="screen-f-picking">
+  <div class="flex justify-between items-center flex-wrap gap-3">
+    <div>
+      <p class="subtitle">Object Picking</p>
+      <h1>Participants are choosing</h1>
+    </div>
+    <span class="tag tag-yellow" id="f-pick-status">0 / 0 claimed</span>
+  </div>
+  <div class="card mt-4" style="margin-top:1.5rem">
+    <h2>Live grid</h2>
+    <div class="pick-grid" id="f-pick-grid"></div>
+  </div>
+  <div class="flex gap-3 mt-6" style="margin-top:1.5rem">
+    <button class="btn btn-primary" onclick="startWritingPhase()">Close picking & start writing →</button>
+    <p class="muted text-sm" style="align-self:center">You can close early or wait until all objects are claimed.</p>
+  </div>
+</div>
+
+<!-- FACILITATOR WRITING -->
+<div class="screen" id="screen-f-writing">
+  <div class="flex justify-between items-center flex-wrap gap-3">
+    <div>
+      <p class="subtitle">Writing Phase</p>
+      <h1>Everyone's writing</h1>
+    </div>
+    <div class="card" style="text-align:center;padding:.75rem 1.25rem;min-width:100px">
+      <p class="text-xs muted">Time left</p>
+      <p class="serif amber" style="font-size:1.8rem;font-weight:700" id="f-timer">--:--</p>
+    </div>
+  </div>
+  <div class="card mt-4" style="margin-top:1.5rem">
+    <h2>Submissions</h2>
+    <div id="f-submissions"></div>
+  </div>
+  <div class="mt-6 flex gap-3" style="margin-top:1.5rem">
+    <button class="btn btn-primary" onclick="startVotingPhase()">Move to voting →</button>
+    <p class="muted text-sm" style="align-self:center">Move early if everyone has submitted.</p>
+  </div>
+</div>
+
+<!-- FACILITATOR VOTING -->
+<div class="screen" id="screen-f-voting">
+  <div class="flex justify-between items-center flex-wrap gap-3">
+    <div>
+      <p class="subtitle">Voting</p>
+      <h1>Reading stories aloud</h1>
+    </div>
+    <span class="tag tag-yellow" id="f-story-counter">Story 1 of N</span>
+  </div>
+  <div class="card-active mt-4 fade-in" style="margin-top:1.5rem">
+    <div class="flex justify-between items-center mb-3" style="margin-bottom:.75rem">
+      <div class="flex gap-3 items-center">
+        <div id="f-obj-img-wrap" style="flex-shrink:0"></div>
+        <div>
+          <p class="subtitle">Current object</p>
+          <p class="bold" style="font-size:1.1rem;color:#111" id="f-current-obj-name">—</p>
+        </div>
+      </div>
+      <div class="amount-pill-wrap" style="text-align:right">
+        <span style="font-size:.65rem;color:#9ca3af;display:block">USD so far</span>
+        <span style="font-size:1.3rem;font-weight:700;color:#111"  id="f-live-amount">$0</span>
+      </div>
+    </div>
+    <p id="f-current-story" style="line-height:1.7;color:#374151;background:#f9fafb;padding:1rem;border-radius:4px;border-left:3px solid #111"></p>
+  </div>
+  <div class="card mt-4" style="margin-top:1rem">
+    <h2>Votes received</h2>
+    <div id="f-vote-status"></div>
+  </div>
+  <div class="flex gap-3 mt-6" style="margin-top:1.5rem">
+    <button class="btn btn-ghost" id="btn-prev-story" onclick="prevStory()" disabled>← Previous</button>
+    <button class="btn btn-primary" id="btn-next-story" onclick="nextStory()">Next story →</button>
+  </div>
+  <p class="muted text-sm mt-2" style="margin-top:.5rem" id="f-voting-hint">Participants are voting on their phones.</p>
+</div>
+
+<!-- RESULTS facilitator -->
+<div class="screen" id="screen-results">
+  <p class="subtitle">Results</p>
+  <h1>Stories have a price</h1>
+  <div id="results-list" class="mt-4" style="margin-top:1.5rem;max-width:600px"></div>
+  <button class="btn btn-primary mt-6" onclick="hardReset()" style="margin-top:2rem">Start new session →</button>
+</div>
+
+<!-- PARTICIPANT WAITING -->
+<div class="screen center-screen" id="screen-p-waiting">
+  <p class="subtitle">Lobby</p>
+  <h1 id="p-hello">Hello!</h1>
+  <p class="muted mt-2">The facilitator will open object picking shortly.</p>
+  <div class="mt-4"><span class="tag tag-gray">Session: <span class="amber" id="p-wait-code"></span></span></div>
+  <div class="mt-6"><div class="pulse-dot"></div></div>
+</div>
+
+<!-- PARTICIPANT PICKING -->
+<div class="screen" id="screen-p-picking">
+  <div class="flex justify-between items-center flex-wrap gap-3">
+    <div>
+      <p class="subtitle">Choose your object</p>
+      <h1>Pick fast.</h1>
+    </div>
+    <span class="tag tag-yellow" id="p-pick-status">— available</span>
+  </div>
+  <p class="muted text-sm mt-2">First come, first served. Taken objects are gone.</p>
+  <div class="pick-grid" id="p-pick-grid" style="margin-top:1.25rem"></div>
+  <div id="p-picked-confirm" style="display:none;margin-top:1.5rem" class="card-active fade-in">
+    <p class="text-sm muted mb-1">You claimed</p>
+    <p class="bold" style="font-size:1.1rem" id="p-picked-name">—</p>
+    <p class="muted text-sm mt-2">Wait for the facilitator to start the writing phase.</p>
+    <div class="mt-3"><div class="pulse-dot"></div></div>
+  </div>
+</div>
+
+<!-- PARTICIPANT WRITING -->
+<div class="screen" id="screen-p-writing">
+  <div class="flex justify-between items-center">
+    <p class="subtitle">Time to write</p>
+    <span class="tag tag-yellow" id="p-timer-badge">⏱ --:--</span>
+  </div>
+  <div class="card mt-3 fade-in" style="margin-top:1rem">
+    <div class="flex gap-3 items-center">
+      <div id="p-obj-img-wrap"></div>
+      <div>
+        <p class="text-xs muted mb-1">You're writing about</p>
+        <p class="bold" style="font-size:1.1rem" id="p-obj-name">—</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <p class="muted text-sm">Write a story about this object. Where does it come from? Who owned it? What does it mean?</p>
+  </div>
+  <textarea id="p-story" placeholder="Once upon a time, this object..." rows="9" class="mt-3" style="margin-top:1rem"></textarea>
+  <div class="flex justify-between items-center mt-2" style="margin-top:.5rem">
+    <span class="text-xs muted" id="p-char-count">0 characters</span>
+    <button class="btn btn-primary" onclick="submitStory()">Submit story →</button>
+  </div>
+</div>
+
+<!-- PARTICIPANT VOTING -->
+<div class="screen" id="screen-p-voting">
+  <div class="flex justify-between items-center">
+    <div>
+      <p class="subtitle">Time to vote</p>
+      <p class="text-sm muted" id="p-story-counter">Story 1 of N</p>
+    </div>
+    <div style="text-align:right">
+      <p class="text-xs muted">Budget left</p>
+      <p class="serif amber" style="font-size:1.4rem;font-weight:700">$<span id="p-budget-left">100</span></p>
+    </div>
+  </div>
+  <div class="budget-bar mt-1"><div class="budget-fill" id="p-budget-bar" style="width:100%"></div></div>
+  <div class="card-active mt-4 fade-in" style="margin-top:1.25rem">
+    <div class="flex gap-3 items-center mb-3" style="margin-bottom:1rem">
+      <div id="p-voting-img-wrap" style="flex-shrink:0"></div>
+      <div>
+        <p class="subtitle">Current object</p>
+        <p class="bold" style="font-size:1.1rem;color:#111" id="p-current-obj-name">—</p>
+      </div>
+    </div>
+    <div id="p-story-text" style="font-size:.88rem;line-height:1.7;color:#374151;background:#f9fafb;padding:1rem;border-radius:4px;margin-bottom:1rem;border-left:3px solid #111;display:none"></div>
+    <div id="p-own-story-notice" style="display:none;margin-bottom:1rem" class="tag tag-blue">This is your story — you can't vote for it</div>
+    <div id="p-vote-controls" style="margin-top:1.5rem">
+      <p class="text-sm muted mb-2">How much is this story worth?</p>
+      <div class="flex items-center gap-3">
+        <span class="text-xs muted">$0</span>
+        <input type="range" min="0" max="100" step="5" value="0" id="p-vote-slider" oninput="onSliderChange(this.value)" style="flex:1">
+        <span class="text-xs muted" id="p-slider-max">$100</span>
+      </div>
+      <div class="price-tag mt-4" style="margin:1.25rem auto 0;display:flex">
+        <span style="font-size:.65rem;color:#9ca3af;display:block">My bid</span>
+        <span style="font-size:1.3rem;font-weight:700;color:#111"  id="p-bid-amount">$0</span>
+      </div>
+    </div>
+  </div>
+  <p class="muted text-sm mt-3" id="p-waiting-next" style="margin-top:1rem;display:none;text-align:center">
+    <span class="pulse-dot" style="margin-right:6px"></span>Waiting for next story…
+  </p>
+  <button class="btn btn-primary btn-full mt-4" id="p-submit-vote-btn" onclick="submitVoteForCurrent()" style="margin-top:1.25rem">Submit vote →</button>
+</div>
+
+<!-- PARTICIPANT SUBMITTED -->
+<div class="screen center-screen" id="screen-p-submitted">
+  <span style="font-size:3rem">✍️</span>
+  <h1 class="mt-3">Story submitted!</h1>
+  <p class="muted mt-2">Wait for the facilitator to start voting.</p>
+  <div class="mt-6"><div class="pulse-dot"></div></div>
+</div>
+
+<!-- PARTICIPANT DONE VOTING -->
+<div class="screen center-screen" id="screen-p-done">
+  <span style="font-size:3rem">✓</span>
+  <h1 class="mt-3">All votes in</h1>
+  <p class="muted mt-2">Results will appear shortly.</p>
+  <div class="mt-6"><div class="pulse-dot"></div></div>
+</div>
+
+<!-- PARTICIPANT RESULTS -->
+<div class="screen" id="screen-p-results">
+  <p class="subtitle">Results</p>
+  <h1>Stories have a price</h1>
+  <div id="p-results-list" class="mt-4" style="margin-top:1.5rem"></div>
+  <button class="btn btn-ghost mt-6" onclick="hardReset()" style="margin-top:2rem">Back to home</button>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://qpbfbhjdlecdafrggqdk.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwYmZiaGpkbGVjZGFmcmdncWRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMTQwMjAsImV4cCI6MjA5NzY5MDAyMH0.7MWCSHOzArd-rG4zzLXE_X6yZMe0SEIBmNpyk_zwF8A';
+
+let sb;
+let SESSION       = null;
+let MY            = { id: null, name: null, objectId: null, isHost: false };
+let selectedObjIds = [];
+let currentStoryIdx = 0;
+let myVotes       = {};
+let pollTimer     = null;
+let countdownTimer = null;
+let totalBudget   = 100;
+let lastSeenStoryIdx = -1;
+
+window.addEventListener('DOMContentLoaded', () => {
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const appUrl = window.location.href.split('?')[0];
+  const qrImg = document.getElementById('home-qr-img');
+  if (qrImg) {
+    qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + encodeURIComponent(appUrl);
+  }
+});
+
+// ── UTILS ──────────────────────────────────────────────────────────
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function toast(msg, dur=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function generateCode() {
+  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  return Array.from({length:4}, () => c[Math.floor(Math.random()*c.length)]).join('');
+}
+
+function formatTime(s) {
+  const m = Math.floor(s/60), sec = s%60;
+  return `${m}:${sec.toString().padStart(2,'0')}`;
+}
+
+function imgOrPlaceholder(img, cls, ph='📦') {
+  return img
+    ? `<img src="${img}" class="${cls}" onerror="this.style.display='none'">`
+    : `<div class="${cls.replace('img','placeholder')}">${ph}</div>`;
+}
+
+function hardReset() {
+  // Clear all state
+  SESSION        = null;
+  MY             = { id: null, name: null, objectId: null, isHost: false };
+  selectedObjIds = [];
+  currentStoryIdx = 0;
+  myVotes        = {};
+  lastSeenStoryIdx = -1;
+  if (pollTimer)      clearInterval(pollTimer);
+  if (countdownTimer) clearInterval(countdownTimer);
+  pollTimer      = null;
+  countdownTimer = null;
+  // Reset forms
+  document.getElementById('p-name').value    = '';
+  document.getElementById('p-code').value    = '';
+  document.getElementById('p-story').value   = '';
+  document.getElementById('p-char-count').textContent = '0 characters';
+  goTo('screen-home');
+}
+
+function generateQR() {
+  const url = window.location.href.split('?')[0];
+  const canvas = document.getElementById('qr-canvas');
+  if (!canvas) return;
+  const img = document.createElement('img');
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(url);
+  img.width = 160; img.height = 160;
+  canvas.replaceWith(img);
+  const label = document.getElementById('qr-url-label');
+  if (label) label.textContent = url;
+}
+
+async function fetchSession() {
+  if (!SESSION) return null;
+  const { data } = await sb.from('sessions').select('*').eq('id', SESSION.id).single();
+  return data;
+}
+
+// ── LIBRARY ────────────────────────────────────────────────────────
+async function loadLibrary() {
+  const { data, error } = await sb.from('objects').select('*').order('created_at', { ascending: false });
+  if (error) { console.error(error); return; }
+  renderLibrary(data || []);
+}
+
+function renderLibrary(objects) {
+  const el = document.getElementById('lib-grid');
+  if (!objects.length) {
+    el.innerHTML = '<p class="muted text-sm">No objects yet — add your first one below.</p>';
+    return;
+  }
+  el.innerHTML = objects.map(o => `
+    <div class="lib-card ${selectedObjIds.includes(o.id) ? 'selected' : ''}"
+      onclick="toggleLibObject('${o.id}', this)" data-id="${o.id}" data-name="${o.name}" data-img="${o.img||''}">
+      ${o.img
+        ? `<img src="${o.img}" class="lib-card-img" onerror="this.style.display='none'">`
+        : `<div class="lib-card-placeholder">📦</div>`}
+      <p class="lib-card-name">${o.name}</p>
+    </div>`).join('');
+  updateSelectionUI();
+}
+
+function toggleLibObject(id, el) {
+  if (selectedObjIds.includes(id)) {
+    selectedObjIds = selectedObjIds.filter(x => x !== id);
+    el.classList.remove('selected');
+  } else {
+    selectedObjIds.push(id);
+    el.classList.add('selected');
+  }
+  updateSelectionUI();
+}
+
+function updateSelectionUI() {
+  const n = selectedObjIds.length;
+  document.getElementById('selected-count').textContent = n + ' selected';
+  document.getElementById('btn-create-session').disabled = n < 1;
+
+  // Preview in right panel
+  const cards = document.querySelectorAll('.lib-card');
+  const selected = Array.from(cards)
+    .filter(c => selectedObjIds.includes(c.dataset.id))
+    .map(c => c.dataset.name);
+  const preview = document.getElementById('session-objects-preview');
+  preview.innerHTML = selected.length
+    ? `<p class="text-xs muted mb-1">Selected objects:</p>` +
+      selected.map(n => `<span class="tag tag-yellow" style="margin:2px;display:inline-block">${n}</span>`).join('')
+    : '';
+}
+
+async function addObjectToLibrary() {
+  const name = document.getElementById('new-obj-name').value.trim();
+  const img  = document.getElementById('new-obj-img').value.trim();
+  if (!name) { toast('Enter an object name'); return; }
+  const { error } = await sb.from('objects').insert({ name, img: img || null });
+  if (error) { console.error(error); toast('Error saving object'); return; }
+  document.getElementById('new-obj-name').value = '';
+  document.getElementById('new-obj-img').value  = '';
+  toast('Object added to library ✓');
+  await loadLibrary();
+}
+
+// Load library when entering setup screen
+document.addEventListener('DOMContentLoaded', () => {
+  // Patch goTo to load library on setup
+  const origGoTo = window.goTo;
+});
+
+// Override to load library on demand
+function showSetup() {
+  goTo('screen-facilitator-setup');
+  loadLibrary();
+}
+
+// Fix home button
+document.querySelector('[onclick="goTo(\'screen-facilitator-setup\')"]') &&
+  document.querySelector('[onclick="goTo(\'screen-facilitator-setup\')"]')
+    .setAttribute('onclick', 'showSetup()');
+
+// ── CREATE SESSION ─────────────────────────────────────────────────
+async function createSession() {
+  if (!selectedObjIds.length) { toast('Select at least one object'); return; }
+
+  // Fetch selected objects from library
+  const { data: libObjs } = await sb.from('objects').select('*').in('id', selectedObjIds);
+  const objects = libObjs.map(o => ({
+    id: o.id, name: o.name, img: o.img || '',
+    assignedTo: null, authorId: null, story: null
+  }));
+
+  const budget    = parseInt(document.getElementById('budget-amount').value) || 100;
+  const writeTime = parseInt(document.getElementById('write-time').value)    || 10;
+  const code      = generateCode();
+
+  const { data, error } = await sb.from('sessions').insert({
+    code, budget, write_time: writeTime,
+    phase: 'lobby',
+    objects,
+    participants: {},
+    votes: {},
+    current_story_idx: 0,
+    story_vote_counts: {}
+  }).select().single();
+
+  if (error) { console.error(error); toast('Error creating session'); return; }
+  SESSION = data;
+  totalBudget = budget;
+  MY.isHost = true;
+  selectedObjIds = [];
+
+  document.getElementById('lobby-code').textContent = code;
+  renderLobbyObjects(data.objects);
+  goTo('screen-facilitator-lobby');
+  setTimeout(generateQR, 200);
+  startHostPoll();
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(SESSION.code).catch(()=>{});
+  toast('Code copied: ' + SESSION.code);
+}
+
+// ── HOST POLL ──────────────────────────────────────────────────────
+function startHostPoll() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    const s = await fetchSession();
+    if (!s) return;
+    SESSION = s;
+    const cur = document.querySelector('.screen.active').id;
+    if (cur === 'screen-facilitator-lobby') { renderParticipantChips(s); renderLobbyObjects(s.objects); }
+    if (cur === 'screen-f-picking')         { renderFacilitatorPickGrid(s); }
+    if (cur === 'screen-f-writing')         { renderSubmissions(s); }
+    if (cur === 'screen-f-voting')          { updateFacilitatorVotingUI(s); }
+    if (s.phase === 'results' && cur !== 'screen-results') {
+      renderResults(s, 'results-list'); goTo('screen-results');
+    }
+  }, 2000);
+}
+
+function renderParticipantChips(s) {
+  const parts = Object.values(s.participants || {});
+  document.getElementById('p-count').textContent = parts.length + ' joined';
+  const el = document.getElementById('participants-chips');
+  el.innerHTML = parts.length
+    ? parts.map(p => `<span class="p-chip">${p.name}</span>`).join('')
+    : '<p class="muted text-sm">Waiting...</p>';
+  document.getElementById('btn-open-picking').disabled = parts.length < 1;
+}
+
+function renderLobbyObjects(objects) {
+  document.getElementById('lobby-objects').innerHTML = objects.map(o => `
+    <div class="vote-row">
+      <span class="text-sm">${o.name}</span>
+      ${o.assignedTo ? `<span class="tag tag-green">${o.assignedTo}</span>` : '<span class="tag tag-gray">Available</span>'}
+    </div>`).join('');
+}
+
+// ── PICKING PHASE ──────────────────────────────────────────────────
+async function openPickingPhase() {
+  const fresh = await fetchSession();
+  await sb.from('sessions').update({ phase: 'picking' }).eq('id', fresh.id);
+  SESSION = { ...fresh, phase: 'picking' };
+  renderFacilitatorPickGrid(SESSION);
+  goTo('screen-f-picking');
+}
+
+function renderFacilitatorPickGrid(s) {
+  const taken = s.objects.filter(o => o.assignedTo).length;
+  document.getElementById('f-pick-status').textContent = `${taken} / ${s.objects.length} claimed`;
+  document.getElementById('f-pick-grid').innerHTML = s.objects.map(o => `
+    <div class="pick-card ${o.assignedTo ? 'taken' : ''}">
+      ${imgOrPlaceholder(o.img, 'pick-card-img')}
+      <p class="pick-card-name">${o.name}</p>
+      ${o.assignedTo ? `<p class="pick-card-claimer">${o.assignedTo}</p>` : ''}
+    </div>`).join('');
+}
+
+// ── JOIN ───────────────────────────────────────────────────────────
+async function joinSession() {
+  const name = document.getElementById('p-name').value.trim();
+  const code = document.getElementById('p-code').value.trim().toUpperCase();
+  if (!name) { toast('Enter your name'); return; }
+  if (code.length !== 4) { toast('Code is 4 letters'); return; }
+
+  const { data: s, error } = await sb.from('sessions').select('*').eq('code', code).single();
+  if (error || !s) { toast('Session not found'); return; }
+  if (!['lobby','picking','writing'].includes(s.phase)) { toast('Session not accepting participants'); return; }
+
+  MY.id   = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+  MY.name = name;
+  SESSION = s;
+  totalBudget = s.budget;
+
+  const participants = { ...s.participants };
+  participants[MY.id] = { id: MY.id, name, submitted: false, voted: false };
+  await sb.from('sessions').update({ participants }).eq('id', s.id);
+
+  document.getElementById('p-hello').textContent     = 'Hello, ' + name + '!';
+  document.getElementById('p-wait-code').textContent = code;
+
+  if (s.phase === 'lobby')        goTo('screen-p-waiting');
+  else if (s.phase === 'picking') showPickingScreen(s);
+  else if (s.phase === 'writing') {
+    const myObj = s.objects.find(o => o.authorId === MY.id);
+    if (myObj) { MY.objectId = myObj.id; showWritingScreen(myObj, s); }
+    else goTo('screen-p-waiting');
+  }
+  startParticipantPoll();
+}
+
+// ── PARTICIPANT PICK ───────────────────────────────────────────────
+function showPickingScreen(s) {
+  renderParticipantPickGrid(s);
+  goTo('screen-p-picking');
+}
+
+function renderParticipantPickGrid(s) {
+  const available = s.objects.filter(o => !o.assignedTo).length;
+  document.getElementById('p-pick-status').textContent = `${available} available`;
+
+  document.getElementById('p-pick-grid').innerHTML = s.objects.map(o => {
+    const isMine  = o.authorId === MY.id;
+    const isTaken = !!o.assignedTo && !isMine;
+    return `
+      <div class="pick-card ${isTaken?'taken':''} ${isMine?'mine':''}"
+        ${!isTaken && !isMine ? `onclick="claimObject('${o.id}')"` : ''}>
+        ${imgOrPlaceholder(o.img, 'pick-card-img')}
+        <p class="pick-card-name">${o.name}</p>
+        ${isTaken ? `<p class="pick-card-claimer">${o.assignedTo}</p>` : ''}
+        ${!isTaken && !isMine ? '<p class="pick-card-claimer" style="color:#E8A838">Tap to claim</p>' : ''}
+      </div>`;
+  }).join('');
+
+  const myObj = s.objects.find(o => o.authorId === MY.id);
+  if (myObj) {
+    MY.objectId = myObj.id;
+    document.getElementById('p-picked-confirm').style.display = 'block';
+    document.getElementById('p-picked-name').textContent = myObj.name;
+  }
+}
+
+async function claimObject(objId) {
+  if (MY.objectId) { toast('You already claimed an object'); return; }
+  const fresh = await fetchSession();
+  const obj   = fresh.objects.find(o => o.id == objId);
+  if (!obj) return;
+  if (obj.assignedTo) { toast('Too slow — already taken!'); renderParticipantPickGrid(fresh); return; }
+
+  const objects = fresh.objects.map(o =>
+    o.id == objId ? { ...o, assignedTo: MY.name, authorId: MY.id } : o
+  );
+  await sb.from('sessions').update({ objects }).eq('id', fresh.id);
+  MY.objectId = objId;
+  SESSION = { ...fresh, objects };
+
+  document.getElementById('p-picked-confirm').style.display = 'block';
+  document.getElementById('p-picked-name').textContent = obj.name;
+  renderParticipantPickGrid(SESSION);
+  toast('Claimed: ' + obj.name + ' ✓');
+}
+
+// ── WRITING PHASE ──────────────────────────────────────────────────
+async function startWritingPhase() {
+  const fresh = await fetchSession();
+  await sb.from('sessions').update({
+    phase: 'writing',
+    write_start: new Date().toISOString()
+  }).eq('id', fresh.id);
+  SESSION = { ...fresh, phase: 'writing' };
+  startFacilitatorCountdown(fresh.write_time * 60);
+  renderSubmissions(SESSION);
+  goTo('screen-f-writing');
+}
+
+function startFacilitatorCountdown(secs) {
+  if (countdownTimer) clearInterval(countdownTimer);
+  const el = document.getElementById('f-timer');
+  if (el) el.textContent = formatTime(secs);
+  countdownTimer = setInterval(() => {
+    secs--;
+    const el2 = document.getElementById('f-timer');
+    if (el2) el2.textContent = formatTime(Math.max(0, secs));
+    if (secs <= 0) { clearInterval(countdownTimer); toast("Time's up!"); }
+  }, 1000);
+}
+
+function showWritingScreen(obj, s) {
+  document.getElementById('p-obj-name').textContent = obj.name;
+  const wrap = document.getElementById('p-obj-img-wrap');
+  wrap.innerHTML = obj.img
+    ? `<img src="${obj.img}" style="width:72px;height:72px;object-fit:cover;border-radius:4px" onerror="this.style.display='none'">`
+    : `<div style="width:72px;height:72px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:2rem">📦</div>`;
+
+  const totalSecs = s.write_time * 60;
+  const elapsed   = Math.floor((Date.now() - new Date(s.write_start).getTime()) / 1000);
+  let remaining   = Math.max(0, totalSecs - elapsed);
+  document.getElementById('p-timer-badge').textContent = '⏱ ' + formatTime(remaining);
+
+  if (countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = setInterval(() => {
+    remaining--;
+    const el = document.getElementById('p-timer-badge');
+    if (el) el.textContent = '⏱ ' + formatTime(Math.max(0, remaining));
+    if (remaining <= 0) { clearInterval(countdownTimer); toast("Time's up! Submit your story."); }
+  }, 1000);
+
+  const ta = document.getElementById('p-story');
+  ta.value = '';
+  ta.oninput = function() {
+    document.getElementById('p-char-count').textContent = this.value.length + ' characters';
+  };
+  goTo('screen-p-writing');
+}
+
+function renderSubmissions(s) {
+  const el    = document.getElementById('f-submissions');
+  const parts = Object.values(s.participants || {});
+  el.innerHTML = parts.map(p => `
+    <div class="vote-row">
+      <span class="text-sm">${p.name}</span>
+      ${p.submitted ? '<span class="tag tag-green">Submitted ✓</span>' : '<span class="tag tag-gray">Writing…</span>'}
+    </div>`).join('') || '<p class="muted text-sm">No participants.</p>';
+}
+
+async function submitStory() {
+  const story = document.getElementById('p-story').value.trim();
+  if (story.length < 20) { toast('Write a longer story :)'); return; }
+  const fresh = await fetchSession();
+  const objects = fresh.objects.map(o =>
+    o.id == MY.objectId ? { ...o, story } : o
+  );
+  const participants = { ...fresh.participants };
+  if (participants[MY.id]) participants[MY.id].submitted = true;
+  await sb.from('sessions').update({ objects, participants }).eq('id', fresh.id);
+  toast('Story submitted ✓');
+  goTo('screen-p-submitted');
+}
+
+// ── VOTING PHASE ───────────────────────────────────────────────────
+async function startVotingPhase() {
+  const fresh = await fetchSession();
+  const storiesReady = fresh.objects.filter(o => o.story);
+  if (!storiesReady.length) { toast('No stories submitted yet'); return; }
+  await sb.from('sessions').update({ phase: 'voting', current_story_idx: 0 }).eq('id', fresh.id);
+  SESSION = { ...fresh, phase: 'voting', current_story_idx: 0 };
+  currentStoryIdx = 0;
+  showFacilitatorStory(SESSION);
+  goTo('screen-f-voting');
+}
+
+function showFacilitatorStory(s) {
+  const stories = s.objects.filter(o => o.story);
+  const obj     = stories[currentStoryIdx];
+  document.getElementById('f-story-counter').textContent    = `Story ${currentStoryIdx+1} of ${stories.length}`;
+  document.getElementById('f-current-obj-name').textContent = obj ? obj.name : '—';
+  document.getElementById('f-current-story').textContent    = obj ? obj.story : '—';
+  const fImgWrap = document.getElementById('f-obj-img-wrap');
+  if (fImgWrap) {
+    fImgWrap.innerHTML = obj && obj.img
+      ? `<img src="${obj.img}" style="width:56px;height:56px;object-fit:cover;border-radius:4px" onerror="this.style.display='none'">`
+      : `<div style="width:56px;height:56px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.3rem">📦</div>`;
+  }
+  document.getElementById('f-live-amount').textContent      = '$' + getLiveTotal(s, obj);
+  document.getElementById('btn-prev-story').disabled        = currentStoryIdx === 0;
+  const isLast = currentStoryIdx === stories.length - 1;
+  document.getElementById('btn-next-story').textContent     = isLast ? 'Show results →' : 'Next story →';
+  renderFacilitatorVoteStatus(s, obj);
+}
+
+function getLiveTotal(s, obj) {
+  if (!obj || !s.votes || !s.votes[obj.id]) return 0;
+  return s.votes[obj.id].reduce((a, b) => a + b.amount, 0);
+}
+
+function renderFacilitatorVoteStatus(s, obj) {
+  const el       = document.getElementById('f-vote-status');
+  if (!obj) { el.innerHTML = ''; return; }
+  const votes    = (s.votes && s.votes[obj.id]) || [];
+  const parts    = Object.values(s.participants || {});
+  const eligible = parts.filter(p => {
+    const myObj = s.objects.find(o => o.authorId === p.id);
+    return !myObj || myObj.id != obj.id;
+  });
+  const pct = eligible.length ? (votes.length / eligible.length * 100) : 0;
+  el.innerHTML = `
+    <p class="muted text-sm mb-2">${votes.length} / ${eligible.length} eligible participants voted</p>
+    <div class="budget-bar"><div class="budget-fill" style="width:${pct}%"></div></div>`;
+  document.getElementById('f-voting-hint').textContent =
+    `${Math.max(0, eligible.length - votes.length)} participant(s) still voting…`;
+}
+
+function updateFacilitatorVotingUI(s) {
+  const stories = s.objects.filter(o => o.story);
+  const obj     = stories[currentStoryIdx];
+  if (obj) {
+    document.getElementById('f-live-amount').textContent = '$' + getLiveTotal(s, obj);
+    renderFacilitatorVoteStatus(s, obj);
+  }
+}
+
+async function nextStory() {
+  const fresh   = await fetchSession();
+  const stories = fresh.objects.filter(o => o.story);
+  if (currentStoryIdx >= stories.length - 1) {
+    await sb.from('sessions').update({ phase: 'results' }).eq('id', fresh.id);
+    SESSION = { ...fresh, phase: 'results' };
+    renderResults(SESSION, 'results-list');
+    goTo('screen-results');
+    return;
+  }
+  currentStoryIdx++;
+  await sb.from('sessions').update({ current_story_idx: currentStoryIdx }).eq('id', fresh.id);
+  SESSION = { ...fresh, current_story_idx: currentStoryIdx };
+  showFacilitatorStory(SESSION);
+}
+
+async function prevStory() {
+  if (currentStoryIdx <= 0) return;
+  currentStoryIdx--;
+  const fresh = await fetchSession();
+  await sb.from('sessions').update({ current_story_idx: currentStoryIdx }).eq('id', fresh.id);
+  SESSION = { ...fresh, current_story_idx: currentStoryIdx };
+  showFacilitatorStory(SESSION);
+}
+
+// ── PARTICIPANT POLL ───────────────────────────────────────────────
+function startParticipantPoll() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    const s = await fetchSession();
+    if (!s) return;
+    SESSION = s;
+    const cur = document.querySelector('.screen.active').id;
+
+    if (cur === 'screen-p-waiting'   && s.phase === 'picking') showPickingScreen(s);
+    if (cur === 'screen-p-picking') {
+      renderParticipantPickGrid(s);
+      if (s.phase === 'writing') {
+        const myObj = s.objects.find(o => o.authorId === MY.id);
+        if (myObj) { MY.objectId = myObj.id; showWritingScreen(myObj, s); }
+        else goTo('screen-p-waiting');
+      }
+    }
+    if (cur === 'screen-p-submitted' && s.phase === 'voting') showParticipantVoting(s);
+    if (cur === 'screen-p-voting') {
+      const idx = s.current_story_idx || 0;
+      if (idx !== lastSeenStoryIdx) showParticipantVoting(s);
+    }
+    if (s.phase === 'results' && !['screen-p-results','screen-results'].includes(cur)) {
+      renderResults(s, 'p-results-list');
+      goTo('screen-p-results');
+    }
+  }, 2000);
+}
+
+function showParticipantVoting(s) {
+  const stories  = s.objects.filter(o => o.story);
+  const idx      = s.current_story_idx || 0;
+  const obj      = stories[idx];
+  lastSeenStoryIdx = idx;
+
+  const isMyStory = obj && obj.authorId === MY.id;
+  const prev      = myVotes[obj?.id] || 0;
+  const spent     = Object.values(myVotes).reduce((a,b)=>a+b,0) - prev;
+  const left      = Math.max(0, totalBudget - spent);
+
+  document.getElementById('p-story-counter').textContent    = `Story ${idx+1} of ${stories.length}`;
+  document.getElementById('p-current-obj-name').textContent = obj ? obj.name : '—';
+
+  // Show object image
+  const votingImgWrap = document.getElementById('p-voting-img-wrap');
+  if (votingImgWrap) {
+    votingImgWrap.innerHTML = obj && obj.img
+      ? `<img src="${obj.img}" style="width:64px;height:64px;object-fit:cover;border-radius:4px" onerror="this.style.display='none'">`
+      : `<div style="width:64px;height:64px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">📦</div>`;
+  }
+
+  // Show story text
+  const storyEl = document.getElementById('p-story-text');
+  if (storyEl && obj && obj.story && !isMyStory) {
+    storyEl.textContent = obj.story;
+    storyEl.style.display = 'block';
+  } else if (storyEl) {
+    storyEl.style.display = 'none';
+  }
+  document.getElementById('p-budget-left').textContent      = left - prev;
+  document.getElementById('p-budget-bar').style.width       = ((left-prev)/totalBudget*100) + '%';
+
+  const slider    = document.getElementById('p-vote-slider');
+  const controls  = document.getElementById('p-vote-controls');
+  const notice    = document.getElementById('p-own-story-notice');
+  const waitMsg   = document.getElementById('p-waiting-next');
+  const submitBtn = document.getElementById('p-submit-vote-btn');
+  const alreadyVoted = myVotes[obj?.id] !== undefined;
+
+  slider.max   = left;
+  slider.value = myVotes[obj?.id] || 0;
+  document.getElementById('p-bid-amount').textContent = '$' + (myVotes[obj?.id] || 0);
+  document.getElementById('p-slider-max').textContent = '$' + left;
+
+  if (isMyStory) {
+    controls.style.display   = 'none';
+    notice.style.display     = 'block';
+    submitBtn.style.display  = 'none';
+    waitMsg.style.display    = 'block';
+  } else if (alreadyVoted) {
+    controls.style.display   = 'block';
+    notice.style.display     = 'none';
+    submitBtn.textContent    = 'Vote submitted ✓';
+    submitBtn.disabled       = false;
+    submitBtn.style.display  = 'block';
+    waitMsg.style.display    = 'block';
+  } else {
+    controls.style.display   = 'block';
+    notice.style.display     = 'none';
+    submitBtn.textContent    = 'Submit vote →';
+    submitBtn.disabled       = false;
+    submitBtn.style.display  = 'block';
+    waitMsg.style.display    = 'none';
+  }
+  goTo('screen-p-voting');
+}
+
+function onSliderChange(val) {
+  val = parseInt(val);
+  const stories = SESSION.objects.filter(o => o.story);
+  const obj     = stories[SESSION.current_story_idx || 0];
+  const prev    = myVotes[obj?.id] || 0;
+  const spent   = Object.values(myVotes).reduce((a,b)=>a+b,0) - prev;
+  const left    = totalBudget - spent;
+  val = Math.min(val, left);
+  document.getElementById('p-vote-slider').value       = val;
+  document.getElementById('p-bid-amount').textContent  = '$' + val;
+  document.getElementById('p-budget-left').textContent = left - val;
+  document.getElementById('p-budget-bar').style.width  = ((left-val)/totalBudget*100) + '%';
+}
+
+async function submitVoteForCurrent() {
+  const fresh   = await fetchSession();
+  const stories = fresh.objects.filter(o => o.story);
+  const idx     = fresh.current_story_idx || 0;
+  const obj     = stories[idx];
+  if (!obj || obj.authorId === MY.id) return;
+
+  const amount = parseInt(document.getElementById('p-vote-slider').value) || 0;
+  myVotes[obj.id] = amount;
+
+  const votes = JSON.parse(JSON.stringify(fresh.votes || {}));
+  if (!votes[obj.id]) votes[obj.id] = [];
+  votes[obj.id] = votes[obj.id].filter(v => v.from !== MY.id);
+  votes[obj.id].push({ from: MY.id, name: MY.name, amount });
+
+  await sb.from('sessions').update({ votes }).eq('id', fresh.id);
+  toast('Vote saved ✓');
+  document.getElementById('p-submit-vote-btn').textContent = 'Vote submitted ✓';
+  document.getElementById('p-waiting-next').style.display  = 'block';
+}
+
+// ── RESULTS ───────────────────────────────────────────────────────
+function renderResults(s, containerId) {
+  const el = document.getElementById(containerId);
+  const scored = s.objects
+    .filter(o => o.story)
+    .map(o => {
+      const votes = (s.votes && s.votes[o.id]) || [];
+      const total = votes.reduce((a, b) => a + b.amount, 0);
+      return { ...o, total, voteCount: votes.length };
+    })
+    .sort((a, b) => b.total - a.total);
+
+  if (!scored.length) { el.innerHTML = '<p class="muted">No results yet.</p>'; return; }
+  el.innerHTML = scored.map((o, i) => `
+    <div class="result-item ${i===0?'first':'rest'} fade-in" style="margin-bottom:1rem">
+      ${i===0?'<span class="tag tag-yellow" style="margin-bottom:.75rem;display:inline-block">Most valued story</span>':''}
+      <div class="flex gap-3" style="margin-bottom:.75rem;align-items:flex-start">
+        ${o.img ? `<img src="${o.img}" style="width:80px;height:80px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display='none'">` : `<div style="width:80px;height:80px;background:#f3f4f6;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.8rem">📦</div>`}
+        <div style="flex:1;min-width:0">
+          <div class="flex justify-between items-start gap-3">
+            <div>
+              <p class="bold" style="color:#111;font-size:1rem">${i===0?'🏆 ':'#'+(i+1)+' '}${o.name}</p>
+              <p class="muted text-xs" style="margin-top:2px">by ${o.assignedTo||'unknown'} &nbsp;·&nbsp; ${o.voteCount} vote(s)</p>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <span style="font-size:.65rem;color:#9ca3af;display:block">Total USD</span>
+              <span style="font-size:1.4rem;font-weight:700;color:#111">$${o.total}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:.85rem;line-height:1.65;color:#374151;background:#f9fafb;padding:.85rem;border-radius:4px;word-break:break-word;overflow-wrap:break-word;border-left:3px solid #e5e7eb">"${(o.story||'').slice(0,400)}${o.story&&o.story.length>400?'…':''}"</p>
+    </div>`).join('');
+}
+// ── END SESSION ────────────────────────────────────────────────────
+async function endSession() {
+  if (!SESSION) return;
+  if (!confirm('End session and delete all data?')) return;
+  await sb.from('sessions').delete().eq('id', SESSION.id);
+  hardReset();
+}
+</script>
+</body>
+</html>
